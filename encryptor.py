@@ -10,6 +10,22 @@ except ModuleNotFoundError:
     os.system(f"pip install cryptography")
 
 
+helptext = """Usage:
+	python encryptor.py --help\t\t Show this menu
+\t\t\t    --encrypt [key]\t Encryption
+\t\t\t\t  --text [text]\t\t\t Encrypts the text
+\t\t\t\t  --file [filename]\t\t Encrypts the file
+\t\t\t\t  --directory [directory]\t Encrypts all files in the directory
+
+\t\t\t    --decrypt [key]\t Decryption
+\t\t\t\t  --text [text]\t\t\t Decrypts the text
+\t\t\t\t  --file [filename]\t\t Decrypts the file
+\t\t\t\t  --directory [directory]\t Decrypts all files in the directory
+Examples:
+	python encryptor.py --encrypt cork --text quark
+	python encryptor.py -d password -f banana.txt"""
+
+
 class Encryption:
 	def __init__(self, key):
 		self.generate_key(key)
@@ -29,21 +45,6 @@ class Encryption:
 		cls.generate_key(key)
 		return cls.fernet.decrypt(text)
 
-helptext = """Usage:
-	python encryptor.py --help\t\t Show this menu
-\t\t\t    --encrypt [key]\t Encryption
-\t\t\t\t  --text [text]\t\t\t Encrypts the text
-\t\t\t\t  --file [filename]\t\t Encrypts the file
-\t\t\t\t  --directory [directory]\t Encrypts all files in the directory
-
-\t\t\t    --decrypt [key]\t Decryption
-\t\t\t\t  --text [text]\t\t\t Decrypts the text
-\t\t\t\t  --file [filename]\t\t Decrypts the file
-\t\t\t\t  --directory [directory]\t decrypts all files in the directory
-Examples:
-	python encryptor.py --encrypt cork --text quark
-	python encryptor.py -d password -f banana.txt"""
-
 
 if __name__ == "__main__":
 	if len(argv) == 1: print(helptext)
@@ -52,10 +53,7 @@ if __name__ == "__main__":
 		if argv[1] == "-e" or argv[1] == "--encrypt":
 			encryptor = Encryption(argv[2])
 
-			if argv[3] == "-t" or argv[3] == "--text":
-				print(encryptor.encrypt(argv[4]))
-
-			elif argv[3] == "-f" or argv[3] == "--file":
+			if argv[3] == "-f" or argv[3] == "--file":
 				with open(argv[4], "rb") as initial: 
 					contents = initial.read()
 				with open(argv[4], "wb") as encrypted:
@@ -73,7 +71,7 @@ if __name__ == "__main__":
 	
 		elif argv[1] == "-d" or argv[1] == "--decrypt":
 			if argv[3] == "-t" or argv[3] == "--text":
-				print(Encryption.decrypt(argv[4], argv[2]))
+				print(Encryption.decrypt(argv[4].encode(), argv[2]).decode())
 
 			elif argv[3] == "-f" or argv[3] == "--file":
 				with open(argv[4], "rb") as initial:
@@ -99,4 +97,10 @@ if __name__ == "__main__":
 
 			else: print("Invalid arguments. Use python encryptor.py --help for details.")
 		else: print("Invalid arguments. Use python encryptor.py --help for details.")
-	else: print("Invalid arguments. Use python encryptor.py --help for details.")
+	else: 
+		if argv[1] == "-e" or argv[1] == "--encrypt":
+			encryptor = Encryption(argv[2])
+			if argv[3] == "-t" or argv[3] == "--text":
+				print(encryptor.encrypt(" ".join(argv[4:]).encode()).decode())
+			else: print("Invalid arguments. Use python encryptor.py --help for details.")
+		else: print("Invalid arguments. Use python encryptor.py --help for details.")
