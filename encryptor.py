@@ -46,6 +46,8 @@ class Encryption:
 		return cls.fernet.decrypt(text)
 
 
+# files = [[item[0]+os.sep+file for file in item[-1]] for item in os.walk("qqqqq")]
+
 if __name__ == "__main__":
 	if len(argv) == 1: print(helptext)
 	elif argv[1] == "--help" or argv[1] == "-h": print(helptext)
@@ -62,10 +64,12 @@ if __name__ == "__main__":
 			elif argv[3] == "-d" or argv[3] == "--directory":
 				for path, _dirs, files in os.walk(argv[4]):
 					for file in files:
-						with open(path+os.sep+file, "rb") as initial: 
-							contents = initial.read()
-						with open(path+os.sep+file, "wb") as encrypted:
-							encrypted.write(encryptor.encrypt(contents))
+						try:
+							with open(path+os.sep+file, "rb") as initial: 
+								contents = initial.read()
+							with open(path+os.sep+file, "wb") as encrypted:
+								encrypted.write(encryptor.encrypt(contents))
+						except PermissionError: pass
 
 			else: print("Invalid arguments. Use python encryptor.py --help for details.")
 	
@@ -74,26 +78,28 @@ if __name__ == "__main__":
 				print(Encryption.decrypt(argv[4].encode(), argv[2]).decode())
 
 			elif argv[3] == "-f" or argv[3] == "--file":
-				with open(argv[4], "rb") as initial:
-					contents = initial.read()
-				with open(argv[4], "wb") as decrypted:
-					try:
-						decrypted.write(Encryption.decrypt(contents, argv[2]))
-					except InvalidToken:
-						decrypted.write(contents)
-						print("Incorrect key.")
+					with open(argv[4], "rb") as initial:
+						contents = initial.read()
+					with open(argv[4], "wb") as decrypted:
+						try:
+							decrypted.write(Encryption.decrypt(contents, argv[2]))
+						except InvalidToken:
+							decrypted.write(contents)
+							print("Incorrect key.")
 			
 			elif argv[3] == "-d" or argv[3] == "--directory":
 				for path, _dirs, files in os.walk(argv[4]):
 					for file in files:
-						with open(path+os.sep+file, "rb") as initial: 
-							contents = initial.read()
-						with open(path+os.sep+file, "wb") as decrypted:
-							try:
-								decrypted.write(Encryption.decrypt(contents, argv[2]))
-							except InvalidToken:
-								decrypted.write(contents)
-								print("Incorrect key.")
+						try:
+							with open(path+os.sep+file, "rb") as initial: 
+								contents = initial.read()
+							with open(path+os.sep+file, "wb") as decrypted:
+								try:
+									decrypted.write(Encryption.decrypt(contents, argv[2]))
+								except InvalidToken:
+									decrypted.write(contents)
+									print("Incorrect key.")
+						except PermissionError: pass
 
 			else: print("Invalid arguments. Use python encryptor.py --help for details.")
 		else: print("Invalid arguments. Use python encryptor.py --help for details.")
