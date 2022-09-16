@@ -44,7 +44,6 @@ Examples:
 	python encryptor.py --encrypt cork --text quark
 	python encryptor.py -d password -f banana.txt"""
 
-# files = [[item[0]+os.sep+file for file in item[-1]] for item in os.walk("qqqqq")]
 
 if __name__ == "__main__":
 	if len(argv) == 1: print(helptext)
