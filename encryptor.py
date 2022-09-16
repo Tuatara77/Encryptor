@@ -1,6 +1,8 @@
 import os
 import base64
 from sys import argv
+from time import perf_counter
+from multiprocessing.pool import Pool
 try:
     from cryptography.hazmat.primitives import hashes
     from cryptography.fernet import Fernet, InvalidToken
@@ -29,24 +31,44 @@ Examples:
 class Encryption:
 	def __init__(self, key):
 		self.generate_key(key)
-	
-	@classmethod
-	def generate_key(cls, key:str):
+
+	def generate_key(self, key:str):
 		kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32,
 						 salt=b'salt', iterations=100000, backend=default_backend())
-		cls.key = base64.urlsafe_b64encode(kdf.derive(key.encode()))
-		cls.fernet = Fernet(cls.key)
+		self.key = base64.urlsafe_b64encode(kdf.derive(key.encode()))
+		self.fernet = Fernet(self.key)
 	
 	def encrypt(self, text):
 		return self.fernet.encrypt(text)
 	
 	@classmethod
 	def decrypt(cls, text, key):
-		cls.generate_key(key)
+		cls.generate_key(cls, key)
 		return cls.fernet.decrypt(text)
 
 
-# files = [[item[0]+os.sep+file for file in item[-1]] for item in os.walk("qqqqq")]
+def encrypt_file(file, encryptor:Encryption):
+	try:
+		with open(file, "rb") as initial: 
+			contents = initial.read()
+		with open(file, "wb") as encrypted:
+			encrypted.write(encryptor.encrypt(contents))
+	except PermissionError: print("Permission Error")
+
+
+def decrypt_file(file, key):
+	try:
+		with open(file, "rb") as initial: 
+			contents = initial.read()
+		with open(file, "wb") as decrypted:
+			try:
+				decrypted.write(Encryption.decrypt(contents, key))
+			except InvalidToken:
+				decrypted.write(contents)
+				print("Incorrect key.")
+	except PermissionError: print("Permission Error")
+
+# for file in [item[0]+os.sep+file for item in os.walk("qqqqq") for file in item[-1]]:
 
 if __name__ == "__main__":
 	if len(argv) == 1: print(helptext)
@@ -55,21 +77,31 @@ if __name__ == "__main__":
 		if argv[1] == "-e" or argv[1] == "--encrypt":
 			encryptor = Encryption(argv[2])
 
-			if argv[3] == "-f" or argv[3] == "--file":
-				with open(argv[4], "rb") as initial: 
-					contents = initial.read()
-				with open(argv[4], "wb") as encrypted:
-					encrypted.write(encryptor.encrypt(contents))
+			if argv[3] == "-t" or argv[3] == "--text":
+				print(encryptor.encrypt(" ".join(argv[4:]).encode()).decode())
+
+			elif argv[3] == "-f" or argv[3] == "--file":
+				encrypt_file(argv[4], encryptor)
 			
 			elif argv[3] == "-d" or argv[3] == "--directory":
-				for path, _dirs, files in os.walk(argv[4]):
-					for file in files:
-						try:
-							with open(path+os.sep+file, "rb") as initial: 
-								contents = initial.read()
-							with open(path+os.sep+file, "wb") as encrypted:
-								encrypted.write(encryptor.encrypt(contents))
-						except PermissionError: pass
+				files = [(item[0]+os.sep+file, encryptor) for item in os.walk(argv[4]) for file in item[-1]]
+
+				t1 = perf_counter()
+				with Pool() as pool:
+					pool.starmap(encrypt_file, files)
+				
+				print(f"Time: {perf_counter()-t1}")
+
+				# for file in files:
+				# 	encrypt_file(file)
+
+				# for file in [item[0]+os.sep+file for item in os.walk(argv[4]) for file in item[-1]]:
+				# 	try:
+				# 		with open(file, "rb") as initial: 
+				# 			contents = initial.read()
+				# 		with open(file, "wb") as encrypted:
+				# 			encrypted.write(encryptor.encrypt(contents))
+				# 	except PermissionError: pass
 
 			else: print("Invalid arguments. Use python encryptor.py --help for details.")
 	
@@ -78,28 +110,27 @@ if __name__ == "__main__":
 				print(Encryption.decrypt(argv[4].encode(), argv[2]).decode())
 
 			elif argv[3] == "-f" or argv[3] == "--file":
-					with open(argv[4], "rb") as initial:
-						contents = initial.read()
-					with open(argv[4], "wb") as decrypted:
-						try:
-							decrypted.write(Encryption.decrypt(contents, argv[2]))
-						except InvalidToken:
-							decrypted.write(contents)
-							print("Incorrect key.")
+				decrypt_file(argv[4], argv[2])
 			
 			elif argv[3] == "-d" or argv[3] == "--directory":
-				for path, _dirs, files in os.walk(argv[4]):
-					for file in files:
-						try:
-							with open(path+os.sep+file, "rb") as initial: 
-								contents = initial.read()
-							with open(path+os.sep+file, "wb") as decrypted:
-								try:
-									decrypted.write(Encryption.decrypt(contents, argv[2]))
-								except InvalidToken:
-									decrypted.write(contents)
-									print("Incorrect key.")
-						except PermissionError: pass
+				files = [(item[0]+os.sep+file, argv[2]) for item in os.walk(argv[4]) for file in item[-1]]
+				
+				t1 = perf_counter()
+				with Pool() as pool:
+					pool.starmap(decrypt_file, files)
+				print(f"Time: {perf_counter()-t1}")
+				
+				# for file in files:
+				# 	try:
+				# 		with open(file, "rb") as initial: 
+				# 			contents = initial.read()
+				# 		with open(file, "wb") as decrypted:
+				# 			try:
+				# 				decrypted.write(Encryption.decrypt(contents, argv[2]))
+				# 			except InvalidToken:
+				# 				decrypted.write(contents)
+				# 				print("Incorrect key.")
+				# 	except PermissionError: pass
 
 			else: print("Invalid arguments. Use python encryptor.py --help for details.")
 		else: print("Invalid arguments. Use python encryptor.py --help for details.")
@@ -108,5 +139,5 @@ if __name__ == "__main__":
 			encryptor = Encryption(argv[2])
 			if argv[3] == "-t" or argv[3] == "--text":
 				print(encryptor.encrypt(" ".join(argv[4:]).encode()).decode())
-			else: print("Invalid arguments. Use python encryptor.py --help for details.")
+			else: print("Invalid arguments. Use python encryptor.py --help for details."); print("q")
 		else: print("Invalid arguments. Use python encryptor.py --help for details.")
