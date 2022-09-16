@@ -68,7 +68,6 @@ def decrypt_file(file, key):
 				print("Incorrect key.")
 	except PermissionError: print("Permission Error")
 
-# for file in [item[0]+os.sep+file for item in os.walk("qqqqq") for file in item[-1]]:
 
 if __name__ == "__main__":
 	if len(argv) == 1: print(helptext)
@@ -92,6 +91,7 @@ if __name__ == "__main__":
 				
 				print(f"Time: {perf_counter()-t1}")
 
+					# This is testing/non-multiprocessing way it was done
 				# for file in files:
 				# 	encrypt_file(file)
 
@@ -120,6 +120,7 @@ if __name__ == "__main__":
 					pool.starmap(decrypt_file, files)
 				print(f"Time: {perf_counter()-t1}")
 				
+					# This is testing/non-multiprocessing way it was done
 				# for file in files:
 				# 	try:
 				# 		with open(file, "rb") as initial: 
