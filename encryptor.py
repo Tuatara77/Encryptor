@@ -140,5 +140,5 @@ if __name__ == "__main__":
 			encryptor = Encryption(argv[2])
 			if argv[3] == "-t" or argv[3] == "--text":
 				print(encryptor.encrypt(" ".join(argv[4:]).encode()).decode())
-			else: print("Invalid arguments. Use python encryptor.py --help for details."); print("q")
+			else: print("Invalid arguments. Use python encryptor.py --help for details.")
 		else: print("Invalid arguments. Use python encryptor.py --help for details.")
