@@ -55,7 +55,6 @@ def encrypt_file(file, encryptor:Encryption):
 			encrypted.write(encryptor.encrypt(contents))
 	except PermissionError: print("Permission Error")
 
-
 def decrypt_file(file, key):
 	try:
 		with open(file, "rb") as initial: 
@@ -69,76 +68,77 @@ def decrypt_file(file, key):
 	except PermissionError: print("Permission Error")
 
 
-if __name__ == "__main__":
-	if len(argv) == 1: print(helptext)
-	elif argv[1] == "--help" or argv[1] == "-h": print(helptext)
-	elif len(argv) == 5:
-		if argv[1] == "-e" or argv[1] == "--encrypt":
-			encryptor = Encryption(argv[2])
+def main(params:tuple[str]):
+	if len(params) == 1: print(helptext)
+	elif params[1] == "--help" or params[1] == "-h": print(helptext)
+	elif len(params) == 5:
+		if params[1] == "-e" or params[1] == "--encrypt":
+			encryptor = Encryption(params[2])
 
-			if argv[3] == "-t" or argv[3] == "--text":
-				print(encryptor.encrypt(" ".join(argv[4:]).encode()).decode())
+			if params[3] == "-t" or params[3] == "--text":
+				print(encryptor.encrypt(" ".join(params[4:]).encode()).decode())
 
-			elif argv[3] == "-f" or argv[3] == "--file":
-				encrypt_file(argv[4], encryptor)
+			elif params[3] == "-f" or params[3] == "--file":
+				t1 = perf_counter()
+				encrypt_file(params[4], encryptor)
+				print(f"Time: {perf_counter()-t1}")
 			
-			elif argv[3] == "-d" or argv[3] == "--directory":
-				files = [(item[0]+os.sep+file, encryptor) for item in os.walk(argv[4]) for file in item[-1]]
+			elif params[3] == "-d" or params[3] == "--directory":
+				files = [(item[0]+os.sep+file, encryptor) for item in os.walk(params[4]) for file in item[-1]]
 
 				t1 = perf_counter()
 				with Pool() as pool:
 					pool.starmap(encrypt_file, files)
 				
-				print(f"Time: {perf_counter()-t1}")
-
-					# This is testing/non-multiprocessing way it was done
 				# for file in files:
-				# 	encrypt_file(file)
-
-				# for file in [item[0]+os.sep+file for item in os.walk(argv[4]) for file in item[-1]]:
 				# 	try:
-				# 		with open(file, "rb") as initial: 
+				# 		with open(file[0], "rb") as initial: 
 				# 			contents = initial.read()
-				# 		with open(file, "wb") as encrypted:
+				# 		with open(file[0], "wb") as encrypted:
 				# 			encrypted.write(encryptor.encrypt(contents))
 				# 	except PermissionError: pass
+				print(f"Time: {perf_counter()-t1}")
 
 			else: print("Invalid arguments. Use python encryptor.py --help for details.")
 	
-		elif argv[1] == "-d" or argv[1] == "--decrypt":
-			if argv[3] == "-t" or argv[3] == "--text":
-				print(Encryption.decrypt(argv[4].encode(), argv[2]).decode())
+		elif params[1] == "-d" or params[1] == "--decrypt":
+			if params[3] == "-t" or params[3] == "--text":
+				print(Encryption.decrypt(params[4].encode(), params[2]).decode())
 
-			elif argv[3] == "-f" or argv[3] == "--file":
-				decrypt_file(argv[4], argv[2])
+			elif params[3] == "-f" or params[3] == "--file":
+				t1 = perf_counter()
+				decrypt_file(params[4], params[2])
+				print(f"Time: {perf_counter()-t1}")
 			
-			elif argv[3] == "-d" or argv[3] == "--directory":
-				files = [(item[0]+os.sep+file, argv[2]) for item in os.walk(argv[4]) for file in item[-1]]
+			elif params[3] == "-d" or params[3] == "--directory":
+				files = [(item[0]+os.sep+file, params[2]) for item in os.walk(params[4]) for file in item[-1]]
 				
 				t1 = perf_counter()
 				with Pool() as pool:
 					pool.starmap(decrypt_file, files)
-				print(f"Time: {perf_counter()-t1}")
 				
-					# This is testing/non-multiprocessing way it was done
 				# for file in files:
 				# 	try:
-				# 		with open(file, "rb") as initial: 
+				# 		with open(file[0], "rb") as initial: 
 				# 			contents = initial.read()
-				# 		with open(file, "wb") as decrypted:
+				# 		with open(file[0], "wb") as decrypted:
 				# 			try:
-				# 				decrypted.write(Encryption.decrypt(contents, argv[2]))
+				# 				decrypted.write(Encryption.decrypt(contents, file[1]))
 				# 			except InvalidToken:
 				# 				decrypted.write(contents)
 				# 				print("Incorrect key.")
 				# 	except PermissionError: pass
+				print(f"Time: {perf_counter()-t1}")
 
 			else: print("Invalid arguments. Use python encryptor.py --help for details.")
 		else: print("Invalid arguments. Use python encryptor.py --help for details.")
 	else: 
-		if argv[1] == "-e" or argv[1] == "--encrypt":
-			encryptor = Encryption(argv[2])
-			if argv[3] == "-t" or argv[3] == "--text":
-				print(encryptor.encrypt(" ".join(argv[4:]).encode()).decode())
-			else: print("Invalid arguments. Use python encryptor.py --help for details.")
+		if params[1] == "-e" or params[1] == "--encrypt":
+			encryptor = Encryption(params[2])
+			if params[3] == "-t" or params[3] == "--text":
+				print(encryptor.encrypt(" ".join(params[4:]).encode()).decode())
+			else: print("Invalid arguments. Use python encryptor.py --help for details."); print("q")
 		else: print("Invalid arguments. Use python encryptor.py --help for details.")
+
+if __name__ == "__main__":
+	main(argv)
